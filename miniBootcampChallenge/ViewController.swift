@@ -27,6 +27,19 @@ class ViewController: UICollectionViewController {
 
 
 // TODO: 1.- Implement a function that allows the app downloading the images without freezing the UI or causing it to work unexpected way
+// For non-file URLS, using the dataTask(with:completionHandler:) method of the URLSession is a better option. Then, loading the image in DispatchQueue.main.async loads the images asynchronously.
+
+func getImage(url: URL, completion: @escaping (UIImage?) -> Void) {
+    URLSession.shared.dataTask(with: url) { data, response, error in
+        if let data = data, let image = UIImage(data: data) {
+            DispatchQueue.main.async {
+                completion(image)
+            }
+        } else {
+            completion(nil)
+        }
+    }.resume()
+}
 
 // TODO: 2.- Implement a function that allows to fill the collection view only when all photos have been downloaded, adding an animation for waiting the completion of the task.
 
@@ -41,10 +54,9 @@ extension ViewController {
         guard let cell = collectionView.dequeueReusableCell(withReuseIdentifier: Constants.cellID, for: indexPath) as? ImageCell else { return UICollectionViewCell() }
         
         let url = urls[indexPath.row]
-        let data = try? Data(contentsOf: url)
-        let image = UIImage(data: data!)
-        cell.display(image)
-        
+        getImage(url: url) { image in
+            cell.display(image)
+        }
         return cell
     }
 }
